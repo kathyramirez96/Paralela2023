@@ -696,12 +696,6 @@ std::string to_stringC(double x)
 
 int main()
 {
-    void *mem1, *mem2;
-    struct rusage uso;
-    struct rlimit limite;
-    getrusage(RUSAGE_SELF, &uso);
-    printf("Uso de RAM: %ld KB\n", (long)uso.ru_maxrss);
-
     std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
     Mat img = imread(image_path, IMREAD_GRAYSCALE);
     if(img.empty())
@@ -807,12 +801,16 @@ int main()
         //SUM VARIANCE
         m_svar = f7_svar(pMatriz, toneCount, m_sentropy);
 
-
+        void *mem1, *mem2;
+        struct rusage uso;
+        struct rlimit limite;
+        getrusage(RUSAGE_SELF, &uso);
+        printf("Uso de RAM: %ld KB\n", (long)uso.ru_maxrss);
             imshow("BIenvenido", img);
             waitKey(0);
 
 
-            lxw_workbook  *workbook  = workbook_new("/home/user/pro1/resultados.xlsx");
+            lxw_workbook  *workbook  = workbook_new("/home/user/PARALELA/pro1/resultados.xlsx");
             lxw_worksheet *worksheet = workbook_add_worksheet(workbook, NULL);
 
             worksheet_write_string(worksheet, 0, 0, "SECOND ANGULAR MOMENT", NULL);
