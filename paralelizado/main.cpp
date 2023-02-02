@@ -7,6 +7,11 @@
 #include "xlsxwriter.h"
 #include <omp.h>
 
+#include <stdio.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <stdlib.h>
+
 
 
 
@@ -697,6 +702,11 @@ void ExecHilo1(){
     {
             int hilo = omp_get_thread_num();
             if(hilo == 1){
+                void *mem1, *mem2;
+                struct rusage uso;
+                struct rlimit limite;
+                getrusage(RUSAGE_SELF, &uso);
+                printf("Uso de RAM: %ld KB\n", (long)uso.ru_maxrss);
                 cout << "soy el hilo: " << hilo;
                 int bandera = 0;
                 std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
@@ -876,6 +886,13 @@ void ExecHilo1(){
 }
 
 void ExecHilo4(){
+    void *mem1, *mem2;
+    struct rusage uso;
+    struct rlimit limite;
+    getrusage(RUSAGE_SELF, &uso);
+    printf("Uso de RAM: %ld KB\n", (long)uso.ru_maxrss);
+
+
     int bandera = 0;
     std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
     Mat img = imread(image_path, IMREAD_GRAYSCALE);
@@ -1073,6 +1090,12 @@ void ExecHilo4(){
 }
 
 void ExecHilo8(){
+    void *mem1, *mem2;
+    struct rusage uso;
+    struct rlimit limite;
+    getrusage(RUSAGE_SELF, &uso);
+    printf("Uso de RAM: %ld KB\n", (long)uso.ru_maxrss);
+
     int bandera = 0;
     std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
     Mat img = imread(image_path, IMREAD_GRAYSCALE);
@@ -1285,6 +1308,12 @@ void ExecHilo8(){
 }
 
 void ExecHilo16(){
+    void *mem1, *mem2;
+    struct rusage uso;
+    struct rlimit limite;
+    getrusage(RUSAGE_SELF, &uso);
+    printf("Uso de RAM: %ld KB\n", (long)uso.ru_maxrss);
+
     int bandera = 0;
     std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
     Mat img = imread(image_path, IMREAD_GRAYSCALE);
@@ -1520,6 +1549,12 @@ void ExecHilo16(){
 }
 
 void ExecHilo32(){
+    void *mem1, *mem2;
+    struct rusage uso;
+    struct rlimit limite;
+    getrusage(RUSAGE_SELF, &uso);
+    printf("Uso de RAM: %ld KB\n", (long)uso.ru_maxrss);
+
     int bandera = 0;
     std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
     Mat img = imread(image_path, IMREAD_GRAYSCALE);
@@ -1750,8 +1785,6 @@ void ExecHilo32(){
             cout << "DATOS ALMACENADIOS";
     }
 }
-
-
 int main()
 {
     ExecHilo1();

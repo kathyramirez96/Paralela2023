@@ -5,6 +5,11 @@
 #include <opencv4/opencv2/highgui.hpp>
 #include <iostream>
 #include "xlsxwriter.h"
+#include <stdio.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <stdlib.h>
+
 
 using namespace cv;
 using namespace std;
@@ -13,7 +18,7 @@ using namespace std;
 //DEFINICIONES DE PARAMETRICAS
 #define PGM_MAXMAXVAL 255
 #define EPSILON 0.000000001
-#define RADIX 2.0z
+#define RADIX 2.0
 #define SIGN(x,y) ((y)<0 ? -fabs(x) : fabs(x))
 #define SWAP(a,b) {y=(a);(a)=(b);(b)=y;}
 
@@ -691,6 +696,12 @@ std::string to_stringC(double x)
 
 int main()
 {
+    void *mem1, *mem2;
+    struct rusage uso;
+    struct rlimit limite;
+    getrusage(RUSAGE_SELF, &uso);
+    printf("Uso de RAM: %ld KB\n", (long)uso.ru_maxrss);
+
     std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
     Mat img = imread(image_path, IMREAD_GRAYSCALE);
     if(img.empty())
