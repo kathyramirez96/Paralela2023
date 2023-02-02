@@ -1,3 +1,4 @@
+#include "libimg.h"
 #include <QCoreApplication>
 #include <opencv4/opencv2/opencv.hpp>
 #include <opencv4/opencv2/core/mat.hpp>
@@ -8,11 +9,12 @@
 #include <omp.h>
 
 
-
-
 using namespace cv;
 using namespace std;
 
+LIBIMG::LIBIMG()
+{
+}
 
 //DEFINICIONES DE PARAMETRICAS
 #define PGM_MAXMAXVAL 255
@@ -21,25 +23,17 @@ using namespace std;
 #define SIGN(x,y) ((y)<0 ? -fabs(x) : fabs(x))
 #define SWAP(a,b) {y=(a);(a)=(b);(b)=y;}
 
-
 //Initialize functions that have been used for measuring co-occurence matrixes for 0,45,90,135 degree angle
 double** CoOcMat_Angle_0   (int distance, u_int8_t **grays, int rows, int cols, int* tone_LUT, int tone_count);
 double** CoOcMat_Angle_45  (int distance, u_int8_t **grays, int rows, int cols, int* tone_LUT, int tone_count);
 double** CoOcMat_Angle_90  (int distance, u_int8_t **grays, int rows, int cols, int* tone_LUT, int tone_count);
 double** CoOcMat_Angle_135 (int distance, u_int8_t **grays, int rows, int cols, int* tone_LUT, int tone_count);
-
-
-
 //INICIALIZAR FUNCIONES
 double f1_asm (double **P, int Ng);
-
 //RECURSOS DE LOS METODOS
 double *allocate_vector (int nl, int nh);
 double **allocate_matrix (int nrl, int nrh, int ncl, int nch);
 void free_matrix(double **matrix,int nrh);
-
-
-
 //-----------------------------CALCULOS-----------------------------
 // LOCACIONES DE MATRIZ CON RANGO
 double **allocate_matrix (int nrl, int nrh, int ncl, int nch)
@@ -67,7 +61,6 @@ double *allocate_vector (int nl, int nh) {
 
     return v - nl;
 }
-
 
 //MATRIZ DE CONCURRENCIA CON ANGULO 0
 double** CoOcMat_Angle_0 (int distance, u_int8_t **grays,
@@ -105,9 +98,7 @@ double** CoOcMat_Angle_0 (int distance, u_int8_t **grays,
     return matrix;
 }
 
-
 //MAX CORREALCION HEIS
-
 int hessenberg (double **a, int n, double wr[], double wi[])
 {
   int nn, m, l, k, j, its, i, mmin;
@@ -319,7 +310,6 @@ void mkbalanced (double **a, int n)
 }
 
 //MAX CORRELACION REDUCCION
-
 void reduction (double **a, int n)
 {
   int m, j, i;
@@ -363,8 +353,6 @@ void reduction (double **a, int n)
   }
 }
 
-
-
 //SECOND ANGULAR MOMENT
 double f1_asm (double **P, int Ng) {
     int i, j;
@@ -405,7 +393,6 @@ double f3_corr (double **P, int Ng) {
         else return (tmp - meanx * meany) / (stddevx * stddevy);
 }
 
-
 //DIFERENCIA ENTROPIA
 double f11_dentropy (double **P, int Ng) {
     int i, j;
@@ -426,9 +413,6 @@ double f11_dentropy (double **P, int Ng) {
     free (Pxpy);
     return -sum;
 }
-
-
-
 
 // DIFERENCIA VARIANZA
 double f10_dvar (double **P, int Ng) {
@@ -452,7 +436,6 @@ double f10_dvar (double **P, int Ng) {
     return var;
 }
 
-
 //ENTROPIA
 double f9_entropy (double **P, int Ng) {
     int i, j;
@@ -475,8 +458,6 @@ double f5_idm (double **P, int Ng) {
     return idm;
 }
 
-
-
 //CONTRASTE
 double f2_contrast (double **P, int Ng) {
     int i, j, n;
@@ -492,8 +473,6 @@ double f2_contrast (double **P, int Ng) {
     }
     return bigsum;
 }
-
-
 
 //INFORMATION MESURE CORRELATION 1 Y 2
 double f12_icorr (double **P, int Ng) {
@@ -526,7 +505,6 @@ double f12_icorr (double **P, int Ng) {
     return ((hxy - hxy1) / (hx > hy ? hx : hy));
 }
 
-
 double f13_icorr (double **P, int Ng) {
     int i, j;
     double *px, *py;
@@ -553,8 +531,6 @@ double f13_icorr (double **P, int Ng) {
     free(py);
     return (sqrt (fabs (1 - exp (-2.0 * (hxy2 - hxy)))));
 }
-
-
 
 //MAXIMO CORRELATION COEFICIENT
 double f14_maxcorr (double **P, int Ng) {
@@ -646,7 +622,6 @@ double f8_sentropy (double **P, int Ng) {
     return sentropy;
 }
 
-
 //SUM OF SQUARE VARIANCE
 double f4_var (double **P, int Ng) {
     int i, j;
@@ -682,8 +657,6 @@ double f7_svar (double **P, int Ng, double S) {
     return var;
 }
 
-
-
 std::string to_stringC(double x)
 {
     std::ostringstream ss;
@@ -691,9 +664,9 @@ std::string to_stringC(double x)
     return ss.str();
 }
 
-void ExecHilo1(){
+void LIBIMG::ExecHilo1() const{
     //EMpieza paralelizacion
-    #pragma omp parallel num_threads(2)
+    #pragma omp parallel num_threads(1)
     {
             int hilo = omp_get_thread_num();
             if(hilo == 1){
@@ -875,7 +848,7 @@ void ExecHilo1(){
     }
 }
 
-void ExecHilo4(){
+void LIBIMG::ExecHilo4() const{
     int bandera = 0;
     std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
     Mat img = imread(image_path, IMREAD_GRAYSCALE);
@@ -1072,7 +1045,7 @@ void ExecHilo4(){
     }
 }
 
-void ExecHilo8(){
+void LIBIMG::ExecHilo8() const{
     int bandera = 0;
     std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
     Mat img = imread(image_path, IMREAD_GRAYSCALE);
@@ -1284,7 +1257,7 @@ void ExecHilo8(){
     }
 }
 
-void ExecHilo16(){
+void LIBIMG::ExecHilo16() const{
     int bandera = 0;
     std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
     Mat img = imread(image_path, IMREAD_GRAYSCALE);
@@ -1519,7 +1492,7 @@ void ExecHilo16(){
     }
 }
 
-void ExecHilo32(){
+void LIBIMG::ExecHilo32() const{
     int bandera = 0;
     std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
     Mat img = imread(image_path, IMREAD_GRAYSCALE);
@@ -1752,15 +1725,6 @@ void ExecHilo32(){
 }
 
 
-int main()
-{
-    ExecHilo1();
-    //ExecHilo4();
-    //ExecHilo8();
-    //ExecHilo16();
-    //ExecHilo32();
-    return 0;
-}
 
 
 
