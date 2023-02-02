@@ -1,0 +1,158 @@
+#include <QCoreApplication>
+#include <opencv4/opencv2/opencv.hpp>
+#include <opencv4/opencv2/core/mat.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv4/opencv2/highgui.hpp>
+#include <iostream>
+
+using namespace cv;
+using namespace std;
+
+
+//INICIALIZAR FUNCIONES
+double f1_asm (double **P, int Ng);
+
+
+//Matriz de concurrencia
+int **ConcurrenMatrix(int arr[], int size)
+    {
+    for (int i = 0; i < size; ++i) {
+           arr[i] *= 2;
+       }
+    }
+
+
+
+double angularSecondMoment(double **P, int Ng)
+{
+    //Ei Ej {p(i,j)}}}**2;
+    int i, j;
+        double sum = 0;
+
+        for (i = 0; i < Ng; ++i)
+            for (j = 0; j < Ng; ++j)
+                sum += P[i][j] * P[i][j];
+
+        return sum;
+}
+
+
+
+
+
+int main()
+{
+    IplImage *img;
+        uchar intensity;
+        
+        img = cvLoadImage("z.bmp", 0);
+        // image z has following matrix:
+        // 0 0 1 1
+        // 0 0 1 1
+        // 0 2 2 2
+        // 2 2 3 3
+    
+        // prinitng the image values
+        cout << endl << "Printing the image vaules: " << endl << endl;
+        for(int y = 0; y < img->height; y++){
+            for(int x = 0; x < img->width; x++){
+                intensity = img->imageData[img->widthStep * y + x * 1];
+                cout << (unsigned int)intensity << "   ";
+            }
+            cout << endl;
+        }
+    
+    
+    
+        int row, col, rows, cols;
+        cols = img->width;
+        rows = img->height;
+    
+    
+        // create a 2-dim array **pGray and copy all the image values in **pGray
+        unsigned char **pGray;
+        pGray = new unsigned char *[rows];
+    
+        for(int i = 0; i < rows; i++){
+            pGray[i] = new unsigned char[cols];
+        }
+    
+        for (int y = 0; y < rows; y++)
+        {
+            for (int x = 0; x < cols; x++)
+            {
+                pGray[y][x] = img->imageData[img->widthStep * y + x * 1];
+            }
+        }
+    
+        //just for varification the pGray has the same value as the image
+        cout << endl << "Printing the image vaules from **pGray: " << endl << endl;
+        for(int y = 0; y < img->height; y++){
+            for(int x = 0; x < img->width; x++){
+                intensity = pGray[y][x];
+                cout << (unsigned int)intensity << "   ";
+            }
+            cout << endl;
+        }
+    
+    
+        int toneLUT[PGM_MAXMAXVAL + 1];		// toneLUT is an array that can hold 256 values
+        int toneCount = 0;
+        int iTone;
+        
+    
+        //FIll toneLUT with -1
+        for(row = PGM_MAXMAXVAL; row >= 0; --row)
+            toneLUT[row] = -1;
+    
+        //fill toneLUT with those 8 bit values which contains in the image
+        //example: z image has value 0,1,2,3,4
+        // so toneLUT will have values only from 0 - 4. 
+        for(row = rows - 1; row >= 0; --row){
+            for(col = 0; col < cols; ++col){
+                //cout << (unsigned int)img->imageData[img->widthStep * row + col * 1] << endl;
+                toneLUT[(u_int8_t)img->imageData[img->widthStep * row + col * 1]] = (u_int8_t)img->imageData[img->widthStep * row + col * 1];
+            }
+        }
+    
+        //toneCount contains the number of 8-bit value variation in the image 
+        for (row = PGM_MAXMAXVAL, toneCount = 0; row >= 0; --row){
+            if (toneLUT[row] != -1)
+                toneCount++;
+            else
+                ;
+        }
+            
+    
+        /* Use the number of different tones to build LUT */
+        for (row = 0, iTone = 0; row <= PGM_MAXMAXVAL; row++){
+            if (toneLUT[row] != -1)
+              toneLUT[row] = iTone++;
+        }
+    double **pMatrix;
+    int distance = 1;	
+    pMatrix = CoOcMat_Angle_0(distance, pGray, rows, cols, toneLUT, toneCount);
+    double m_asm, m_contrast, m_corr, m_var, m_idm, m_savg, m_svar, m_sentropy, m_entropy, m_dvar, m_dentropy, m_icorr1, m_icorr2, m_maxcorr;
+    m_asm = f1_asm (pMatrix , toneCount);
+    
+    
+    
+    std::string image_path = samples::findFile("/home/user/pro1/sky.jpg");
+    Mat img = imread(image_path, IMREAD_GRAYSCALE);
+    if(img.empty())
+    {
+        std::cout << "Could not read the image: " << image_path << std::endl;
+        return 1;
+    }
+    imshow("Display window", img);
+    int k = waitKey(0); // Wait for a keystroke in the window
+    if(k == 's')
+    {
+        imwrite("starry_night.png", img);
+    }
+    return 0;
+}
+
+
+
+
