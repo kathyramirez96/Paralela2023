@@ -692,7 +692,8 @@ std::string to_stringC(double x)
 }
 
 void ExecHilo1(){
-    #pragma omp parallel num_threads(2)
+    //EMpieza paralelizacion
+    #pragma omp parallel num_threads(1)
     {
             int hilo = omp_get_thread_num();
             if(hilo == 1){
@@ -809,7 +810,7 @@ void ExecHilo1(){
                             waitKey(0);
 
 
-                            lxw_workbook  *workbook  = workbook_new("/home/user/pro1/resultados.xlsx");
+                            lxw_workbook  *workbook  = workbook_new("/home/user/PARALELA/pro1/resultados.xlsx");
                             lxw_worksheet *worksheet = workbook_add_worksheet(workbook, NULL);
 
                             worksheet_write_string(worksheet, 0, 0, "SECOND ANGULAR MOMENT", NULL);
@@ -874,16 +875,890 @@ void ExecHilo1(){
     }
 }
 
+void ExecHilo4(){
+    int bandera = 0;
+    std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
+    Mat img = imread(image_path, IMREAD_GRAYSCALE);
+    if(img.empty())
+    {
+        std::cout << "Could not read the image: " << image_path << std::endl;
+        bandera = 1;
+    }
+
+    if(bandera == 0){
+        // IMPRIMIR VALORES IMAGEN
+        unsigned char *p;
+        uchar intensity;
+        p = img.data;
+        int row, col, rows, cols;
+        cols = img.cols; //weigth - col
+        rows = img.rows; //heigth - fil
+
+        for(int y = 0; y < img.rows; y++){
+                for(int x = 0; x < img.cols; x++){
+                    intensity = img.data[img.step * y + x * 1];
+                }
+                cout << endl;
+            }
+
+        // CREAR ARRAY 2D CON LAS DIMENSIONES DEL DEGRADADO A GRISES
+        unsigned char **pGray;
+            pGray = new unsigned char *[rows];
+
+            for(int i = 0; i < rows; i++){
+                pGray[i] = new unsigned char[cols];
+            }
+
+            for (int y = 0; y < rows; y++)
+            {
+                for (int x = 0; x < cols; x++)
+                {
+                    pGray[y][x] = img.data[img.step * y + x * 1];
+                }
+            }
+        // IMPRIMIR LA ESCALA DE GRISES
+            cout << endl << "GRISES: " << endl << endl;
+            for(int y = 0; y < img.cols; y++){
+                for(int x = 0; x < img.rows; x++){
+                    intensity = pGray[y][x];
+                    cout << (unsigned int)intensity << "   ";
+                }
+                cout << endl;
+            }
+
+
+            int toneLUT[PGM_MAXMAXVAL + 1];		// toneLUT is an array that can hold 256 values
+            int toneCount = 0;
+            int iTone;
+
+            //RELLENAR CON -1
+            for(row = PGM_MAXMAXVAL; row >= 0; --row)
+                    toneLUT[row] = -1;
+
+            for(row = rows - 1; row >= 0; --row){
+                    for(col = 0; col < cols; ++col){
+                        toneLUT[(u_int8_t)img.data[img.step * row + col * 1]] = (u_int8_t)img.data[img.step * row + col * 1];
+                    }
+             }
+            for (row = PGM_MAXMAXVAL, toneCount = 0; row >= 0; --row){
+                    if (toneLUT[row] != -1)
+                        toneCount++;
+                    else
+                        ;
+                }
+            for (row = 0, iTone = 0; row <= PGM_MAXMAXVAL; row++){
+                    if (toneLUT[row] != -1)
+                      toneLUT[row] = iTone++;
+                }
+
+            double **pMatriz;
+            int distancia = 1;
+            pMatriz = CoOcMat_Angle_0(distancia, pGray, rows, col, toneLUT, toneCount);
+            double m_asm, m_contrast, m_corr, m_var, m_idm, m_savg, m_svar, m_sentropy, m_entropy, m_dvar, m_dentropy, m_icorr1, m_icorr2, m_maxcorr;
+
+
+//Empieza paralelizacion
+    #pragma omp parallel num_threads(4)
+    {
+
+            int hilo = omp_get_thread_num();
+            if(hilo == 1){
+                cout << "soy el hilo: " << hilo;
+                        //SECOND ANGULAR MOMENT
+                        m_asm = f1_asm (pMatriz , toneCount);
+                        //CORRELACION
+                        m_corr = f3_corr(pMatriz, toneCount);
+                        //DIFERENCIA ENTROPIA
+                        m_dentropy = f11_dentropy(pMatriz, toneCount);
+                   }
+            if(hilo == 2){
+                cout << "soy el hilo: " << hilo;
+                        // DIFERENCIA VARIANZA
+                        m_dvar = f10_dvar(pMatriz, toneCount);
+                        //ENTROPIA
+                        m_entropy = f9_entropy(pMatriz, toneCount);
+                        //INVERSE DIFERENCE MOEMNT
+                        m_idm = f5_idm(pMatriz, toneCount);
+                        //CONTRASTE
+                        m_contrast = f2_contrast(pMatriz , toneCount);
+                        //INFORMATION MESURE CORRELATION 1 Y 2
+                        m_icorr1 = f12_icorr(pMatriz, toneCount);
+                        m_icorr2 = f13_icorr(pMatriz, toneCount);
+                        //MAXIMO CORRELATION COEFICIENT
+                        m_maxcorr = f14_maxcorr(pMatriz, toneCount);
+               }
+            if(hilo == 3){
+                cout << "soy el hilo: " << hilo;
+                        //SUM AVEREGE
+                        m_savg = f6_savg(pMatriz, toneCount);
+                        //SUMA ENTROPIA
+                        m_sentropy = f8_sentropy(pMatriz, toneCount);
+                    }
+            if(hilo == 4){
+                cout << "soy el hilo: " << hilo;
+                        //SUM OF SQUARE VARIANCE
+                        m_var = f4_var(pMatriz, toneCount);
+                        //SUM VARIANCE
+                        m_svar = f7_svar(pMatriz, toneCount, m_sentropy);
+
+            }
 
 
 
+            }
+            imshow("BIenvenido", img);
+            waitKey(0);
 
 
+            lxw_workbook  *workbook  = workbook_new("/home/user/PARALELA/pro1/resultados.xlsx");
+            lxw_worksheet *worksheet = workbook_add_worksheet(workbook, NULL);
+
+            worksheet_write_string(worksheet, 0, 0, "SECOND ANGULAR MOMENT", NULL);
+            worksheet_write_number(worksheet, 0, 1, m_asm, NULL);
+
+            worksheet_write_string(worksheet, 1, 0, "CORRELACION", NULL);
+            worksheet_write_number(worksheet, 1, 1, m_corr, NULL);
+
+            worksheet_write_string(worksheet, 2, 0, "DIFERENCIA ENTROPIA", NULL);
+            worksheet_write_number(worksheet, 2, 1, m_dentropy, NULL);
+
+
+            worksheet_write_string(worksheet, 3, 0, "DIFERENCIA VARIANZA", NULL);
+            worksheet_write_number(worksheet, 3, 1, m_dvar, NULL);
+
+
+            worksheet_write_string(worksheet, 4, 0, "ENTROPIA", NULL);
+            worksheet_write_number(worksheet, 4, 1, m_entropy, NULL);
+
+
+            worksheet_write_string(worksheet, 5, 0, "INVERSE DIFERENCE MOEMNT", NULL);
+            worksheet_write_number(worksheet, 5, 1, m_idm, NULL);
+
+
+            worksheet_write_string(worksheet, 6, 0, "CONTRASTE", NULL);
+            worksheet_write_number(worksheet, 6, 1, m_contrast, NULL);
+
+
+            worksheet_write_string(worksheet, 7, 0, "INFORMATION MESURE CORRELATION 1", NULL);
+            worksheet_write_number(worksheet, 7, 1, m_icorr1, NULL);
+
+
+            worksheet_write_string(worksheet, 8, 0, "INFORMATION MESURE CORRELATION 2", NULL);
+            worksheet_write_number(worksheet, 8, 1, m_icorr2, NULL);
+
+
+            worksheet_write_string(worksheet, 9, 0, "MAXIMO CORRELATION COEFICIENT", NULL);
+            worksheet_write_number(worksheet, 9, 1, m_maxcorr, NULL);
+
+
+            worksheet_write_string(worksheet, 10, 0, "SUM AVEREGE", NULL);
+            worksheet_write_number(worksheet, 10, 1, m_savg, NULL);
+
+
+            worksheet_write_string(worksheet, 11, 0, "SUMA ENTROPIA", NULL);
+            worksheet_write_number(worksheet, 11, 1, m_sentropy, NULL);
+
+
+            worksheet_write_string(worksheet, 12, 0, "SUM OF SQUARE VARIANCE", NULL);
+            worksheet_write_number(worksheet, 12, 1, m_var, NULL);
+
+
+            worksheet_write_string(worksheet, 13, 0, "SUM VARIANCE", NULL);
+            worksheet_write_number(worksheet, 13, 1, m_svar, NULL);
+
+
+            workbook_close(workbook);
+            cout << "DATOS ALMACENADIOS";
+    }
+}
+
+void ExecHilo8(){
+    int bandera = 0;
+    std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
+    Mat img = imread(image_path, IMREAD_GRAYSCALE);
+    if(img.empty())
+    {
+        std::cout << "Could not read the image: " << image_path << std::endl;
+        bandera = 1;
+    }
+
+    if(bandera == 0){
+        // IMPRIMIR VALORES IMAGEN
+        unsigned char *p;
+        uchar intensity;
+        p = img.data;
+        int row, col, rows, cols;
+        cols = img.cols; //weigth - col
+        rows = img.rows; //heigth - fil
+
+        for(int y = 0; y < img.rows; y++){
+                for(int x = 0; x < img.cols; x++){
+                    intensity = img.data[img.step * y + x * 1];
+                }
+                cout << endl;
+            }
+
+        // CREAR ARRAY 2D CON LAS DIMENSIONES DEL DEGRADADO A GRISES
+        unsigned char **pGray;
+            pGray = new unsigned char *[rows];
+
+            for(int i = 0; i < rows; i++){
+                pGray[i] = new unsigned char[cols];
+            }
+
+            for (int y = 0; y < rows; y++)
+            {
+                for (int x = 0; x < cols; x++)
+                {
+                    pGray[y][x] = img.data[img.step * y + x * 1];
+                }
+            }
+        // IMPRIMIR LA ESCALA DE GRISES
+            cout << endl << "GRISES: " << endl << endl;
+            for(int y = 0; y < img.cols; y++){
+                for(int x = 0; x < img.rows; x++){
+                    intensity = pGray[y][x];
+                    cout << (unsigned int)intensity << "   ";
+                }
+                cout << endl;
+            }
+
+
+            int toneLUT[PGM_MAXMAXVAL + 1];		// toneLUT is an array that can hold 256 values
+            int toneCount = 0;
+            int iTone;
+
+            //RELLENAR CON -1
+            for(row = PGM_MAXMAXVAL; row >= 0; --row)
+                    toneLUT[row] = -1;
+
+            for(row = rows - 1; row >= 0; --row){
+                    for(col = 0; col < cols; ++col){
+                        toneLUT[(u_int8_t)img.data[img.step * row + col * 1]] = (u_int8_t)img.data[img.step * row + col * 1];
+                    }
+             }
+            for (row = PGM_MAXMAXVAL, toneCount = 0; row >= 0; --row){
+                    if (toneLUT[row] != -1)
+                        toneCount++;
+                    else
+                        ;
+                }
+            for (row = 0, iTone = 0; row <= PGM_MAXMAXVAL; row++){
+                    if (toneLUT[row] != -1)
+                      toneLUT[row] = iTone++;
+                }
+
+            double **pMatriz;
+            int distancia = 1;
+            pMatriz = CoOcMat_Angle_0(distancia, pGray, rows, col, toneLUT, toneCount);
+            double m_asm, m_contrast, m_corr, m_var, m_idm, m_savg, m_svar, m_sentropy, m_entropy, m_dvar, m_dentropy, m_icorr1, m_icorr2, m_maxcorr;
+    //empieza paralelización
+    #pragma omp parallel num_threads(8)
+    {
+
+
+
+            int hilo = omp_get_thread_num();
+            if(hilo == 1){
+                cout << "soy el hilo: " << hilo;
+                        //SECOND ANGULAR MOMENT
+                        m_asm = f1_asm (pMatriz , toneCount);
+                        //CORRELACION
+                        m_corr = f3_corr(pMatriz, toneCount);
+                       }
+            if(hilo == 2){
+                cout << "soy el hilo: " << hilo;
+                //DIFERENCIA ENTROPIA
+                m_dentropy = f11_dentropy(pMatriz, toneCount);
+            }
+
+            if(hilo == 3){
+                cout << "soy el hilo: " << hilo;
+                        // DIFERENCIA VARIANZA
+                        m_dvar = f10_dvar(pMatriz, toneCount);
+                        //ENTROPIA
+                        m_entropy = f9_entropy(pMatriz, toneCount);
+            }
+            if(hilo == 4){
+                cout << "soy el hilo: " << hilo;
+                //INVERSE DIFERENCE MOEMNT
+                m_idm = f5_idm(pMatriz, toneCount);
+                //CONTRASTE
+                m_contrast = f2_contrast(pMatriz , toneCount);
+            }
+
+            if(hilo == 5){
+                //INFORMATION MESURE CORRELATION 1 Y 2
+                m_icorr1 = f12_icorr(pMatriz, toneCount);
+                m_icorr2 = f13_icorr(pMatriz, toneCount);
+            }
+            if(hilo == 6){
+                //MAXIMO CORRELATION COEFICIENT
+                m_maxcorr = f14_maxcorr(pMatriz, toneCount);
+            }
+
+
+
+            if(hilo == 7){
+                cout << "soy el hilo: " << hilo;
+                        //SUM AVEREGE
+                        m_savg = f6_savg(pMatriz, toneCount);
+                        //SUMA ENTROPIA
+                        m_sentropy = f8_sentropy(pMatriz, toneCount);
+                    }
+            if(hilo == 8){
+                cout << "soy el hilo: " << hilo;
+                        //SUM OF SQUARE VARIANCE
+                        m_var = f4_var(pMatriz, toneCount);
+                        //SUM VARIANCE
+                        m_svar = f7_svar(pMatriz, toneCount, m_sentropy);
+
+            }
+
+
+
+            }
+            imshow("BIenvenido", img);
+            waitKey(0);
+
+
+            lxw_workbook  *workbook  = workbook_new("/home/user/PARALELA/pro1/resultados.xlsx");
+            lxw_worksheet *worksheet = workbook_add_worksheet(workbook, NULL);
+
+            worksheet_write_string(worksheet, 0, 0, "SECOND ANGULAR MOMENT", NULL);
+            worksheet_write_number(worksheet, 0, 1, m_asm, NULL);
+
+            worksheet_write_string(worksheet, 1, 0, "CORRELACION", NULL);
+            worksheet_write_number(worksheet, 1, 1, m_corr, NULL);
+
+            worksheet_write_string(worksheet, 2, 0, "DIFERENCIA ENTROPIA", NULL);
+            worksheet_write_number(worksheet, 2, 1, m_dentropy, NULL);
+
+
+            worksheet_write_string(worksheet, 3, 0, "DIFERENCIA VARIANZA", NULL);
+            worksheet_write_number(worksheet, 3, 1, m_dvar, NULL);
+
+
+            worksheet_write_string(worksheet, 4, 0, "ENTROPIA", NULL);
+            worksheet_write_number(worksheet, 4, 1, m_entropy, NULL);
+
+
+            worksheet_write_string(worksheet, 5, 0, "INVERSE DIFERENCE MOEMNT", NULL);
+            worksheet_write_number(worksheet, 5, 1, m_idm, NULL);
+
+
+            worksheet_write_string(worksheet, 6, 0, "CONTRASTE", NULL);
+            worksheet_write_number(worksheet, 6, 1, m_contrast, NULL);
+
+
+            worksheet_write_string(worksheet, 7, 0, "INFORMATION MESURE CORRELATION 1", NULL);
+            worksheet_write_number(worksheet, 7, 1, m_icorr1, NULL);
+
+
+            worksheet_write_string(worksheet, 8, 0, "INFORMATION MESURE CORRELATION 2", NULL);
+            worksheet_write_number(worksheet, 8, 1, m_icorr2, NULL);
+
+
+            worksheet_write_string(worksheet, 9, 0, "MAXIMO CORRELATION COEFICIENT", NULL);
+            worksheet_write_number(worksheet, 9, 1, m_maxcorr, NULL);
+
+
+            worksheet_write_string(worksheet, 10, 0, "SUM AVEREGE", NULL);
+            worksheet_write_number(worksheet, 10, 1, m_savg, NULL);
+
+
+            worksheet_write_string(worksheet, 11, 0, "SUMA ENTROPIA", NULL);
+            worksheet_write_number(worksheet, 11, 1, m_sentropy, NULL);
+
+
+            worksheet_write_string(worksheet, 12, 0, "SUM OF SQUARE VARIANCE", NULL);
+            worksheet_write_number(worksheet, 12, 1, m_var, NULL);
+
+
+            worksheet_write_string(worksheet, 13, 0, "SUM VARIANCE", NULL);
+            worksheet_write_number(worksheet, 13, 1, m_svar, NULL);
+
+
+            workbook_close(workbook);
+            cout << "DATOS ALMACENADIOS";
+    }
+}
+
+void ExecHilo16(){
+    int bandera = 0;
+    std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
+    Mat img = imread(image_path, IMREAD_GRAYSCALE);
+    if(img.empty())
+    {
+        std::cout << "Could not read the image: " << image_path << std::endl;
+        bandera = 1;
+    }
+
+    if(bandera == 0){
+        // IMPRIMIR VALORES IMAGEN
+        unsigned char *p;
+        uchar intensity;
+        p = img.data;
+        int row, col, rows, cols;
+        cols = img.cols; //weigth - col
+        rows = img.rows; //heigth - fil
+
+        for(int y = 0; y < img.rows; y++){
+                for(int x = 0; x < img.cols; x++){
+                    intensity = img.data[img.step * y + x * 1];
+                }
+                cout << endl;
+            }
+
+        // CREAR ARRAY 2D CON LAS DIMENSIONES DEL DEGRADADO A GRISES
+        unsigned char **pGray;
+            pGray = new unsigned char *[rows];
+
+            for(int i = 0; i < rows; i++){
+                pGray[i] = new unsigned char[cols];
+            }
+
+            for (int y = 0; y < rows; y++)
+            {
+                for (int x = 0; x < cols; x++)
+                {
+                    pGray[y][x] = img.data[img.step * y + x * 1];
+                }
+            }
+        // IMPRIMIR LA ESCALA DE GRISES
+            cout << endl << "GRISES: " << endl << endl;
+            for(int y = 0; y < img.cols; y++){
+                for(int x = 0; x < img.rows; x++){
+                    intensity = pGray[y][x];
+                    cout << (unsigned int)intensity << "   ";
+                }
+                cout << endl;
+            }
+
+
+            int toneLUT[PGM_MAXMAXVAL + 1];		// toneLUT is an array that can hold 256 values
+            int toneCount = 0;
+            int iTone;
+
+            //RELLENAR CON -1
+            for(row = PGM_MAXMAXVAL; row >= 0; --row)
+                    toneLUT[row] = -1;
+
+            for(row = rows - 1; row >= 0; --row){
+                    for(col = 0; col < cols; ++col){
+                        toneLUT[(u_int8_t)img.data[img.step * row + col * 1]] = (u_int8_t)img.data[img.step * row + col * 1];
+                    }
+             }
+            for (row = PGM_MAXMAXVAL, toneCount = 0; row >= 0; --row){
+                    if (toneLUT[row] != -1)
+                        toneCount++;
+                    else
+                        ;
+                }
+            for (row = 0, iTone = 0; row <= PGM_MAXMAXVAL; row++){
+                    if (toneLUT[row] != -1)
+                      toneLUT[row] = iTone++;
+                }
+
+            double **pMatriz;
+            int distancia = 1;
+            pMatriz = CoOcMat_Angle_0(distancia, pGray, rows, col, toneLUT, toneCount);
+            double m_asm, m_contrast, m_corr, m_var, m_idm, m_savg, m_svar, m_sentropy, m_entropy, m_dvar, m_dentropy, m_icorr1, m_icorr2, m_maxcorr;
+    //empieza paralelización
+    #pragma omp parallel num_threads(16)
+    {
+
+
+
+            int hilo = omp_get_thread_num();
+            if(hilo == 1){
+                cout << "soy el hilo: " << hilo;
+                        //SECOND ANGULAR MOMENT
+                        m_asm = f1_asm (pMatriz , toneCount);
+            }
+             if(hilo == 2){
+                cout << "soy el hilo: " << hilo;
+                        //CORRELACION
+                        m_corr = f3_corr(pMatriz, toneCount);
+            }
+            if(hilo == 3){
+                cout << "soy el hilo: " << hilo;
+                //DIFERENCIA ENTROPIA
+                m_dentropy = f11_dentropy(pMatriz, toneCount);
+            }
+
+            if(hilo == 4){
+                cout << "soy el hilo: " << hilo;
+                        // DIFERENCIA VARIANZA
+            }
+            if(hilo == 5){
+                cout << "soy el hilo: " << hilo;
+                        m_dvar = f10_dvar(pMatriz, toneCount);
+             }
+            if(hilo == 6){
+                cout << "soy el hilo: " << hilo;
+                        //ENTROPIA
+                        m_entropy = f9_entropy(pMatriz, toneCount);
+            }
+            if(hilo == 7){
+                cout << "soy el hilo: " << hilo;
+                //INVERSE DIFERENCE MOEMNT
+                m_idm = f5_idm(pMatriz, toneCount);
+            }
+            if(hilo == 8){
+                cout << "soy el hilo: " << hilo;
+                //CONTRASTE
+                m_contrast = f2_contrast(pMatriz , toneCount);
+            }
+
+            if(hilo == 9){
+                //INFORMATION MESURE CORRELATION 1 Y 2
+                m_icorr1 = f12_icorr(pMatriz, toneCount);
+            }
+            if(hilo == 10){
+                cout << "soy el hilo: " << hilo;
+                m_icorr2 = f13_icorr(pMatriz, toneCount);
+            }
+            if(hilo == 11){
+                //MAXIMO CORRELATION COEFICIENT
+                m_maxcorr = f14_maxcorr(pMatriz, toneCount);
+            }
+
+
+
+            if(hilo == 12){
+                cout << "soy el hilo: " << hilo;
+                        //SUM AVEREGE
+                        m_savg = f6_savg(pMatriz, toneCount);
+                 }
+            if(hilo == 13){
+                cout << "soy el hilo: " << hilo;
+                        //SUMA ENTROPIA
+                        m_sentropy = f8_sentropy(pMatriz, toneCount);
+                    }
+            if(hilo == 14){
+                cout << "soy el hilo: " << hilo;
+                        //SUM OF SQUARE VARIANCE
+                        m_var = f4_var(pMatriz, toneCount);
+            }if(hilo == 15){
+                cout << "soy el hilo: " << hilo;
+                        //SUM VARIANCE
+                        m_svar = f7_svar(pMatriz, toneCount, m_sentropy);
+
+            }
+            if(hilo == 16){
+                cout << "soy el hilo: " << hilo;
+                imshow("BIenvenido", img);
+                waitKey(0);
+            }
+
+
+            }
+
+
+
+            lxw_workbook  *workbook  = workbook_new("/home/user/PARALELA/pro1/resultados.xlsx");
+            lxw_worksheet *worksheet = workbook_add_worksheet(workbook, NULL);
+
+            worksheet_write_string(worksheet, 0, 0, "SECOND ANGULAR MOMENT", NULL);
+            worksheet_write_number(worksheet, 0, 1, m_asm, NULL);
+
+            worksheet_write_string(worksheet, 1, 0, "CORRELACION", NULL);
+            worksheet_write_number(worksheet, 1, 1, m_corr, NULL);
+
+            worksheet_write_string(worksheet, 2, 0, "DIFERENCIA ENTROPIA", NULL);
+            worksheet_write_number(worksheet, 2, 1, m_dentropy, NULL);
+
+
+            worksheet_write_string(worksheet, 3, 0, "DIFERENCIA VARIANZA", NULL);
+            worksheet_write_number(worksheet, 3, 1, m_dvar, NULL);
+
+
+            worksheet_write_string(worksheet, 4, 0, "ENTROPIA", NULL);
+            worksheet_write_number(worksheet, 4, 1, m_entropy, NULL);
+
+
+            worksheet_write_string(worksheet, 5, 0, "INVERSE DIFERENCE MOEMNT", NULL);
+            worksheet_write_number(worksheet, 5, 1, m_idm, NULL);
+
+
+            worksheet_write_string(worksheet, 6, 0, "CONTRASTE", NULL);
+            worksheet_write_number(worksheet, 6, 1, m_contrast, NULL);
+
+
+            worksheet_write_string(worksheet, 7, 0, "INFORMATION MESURE CORRELATION 1", NULL);
+            worksheet_write_number(worksheet, 7, 1, m_icorr1, NULL);
+
+
+            worksheet_write_string(worksheet, 8, 0, "INFORMATION MESURE CORRELATION 2", NULL);
+            worksheet_write_number(worksheet, 8, 1, m_icorr2, NULL);
+
+
+            worksheet_write_string(worksheet, 9, 0, "MAXIMO CORRELATION COEFICIENT", NULL);
+            worksheet_write_number(worksheet, 9, 1, m_maxcorr, NULL);
+
+
+            worksheet_write_string(worksheet, 10, 0, "SUM AVEREGE", NULL);
+            worksheet_write_number(worksheet, 10, 1, m_savg, NULL);
+
+
+            worksheet_write_string(worksheet, 11, 0, "SUMA ENTROPIA", NULL);
+            worksheet_write_number(worksheet, 11, 1, m_sentropy, NULL);
+
+
+            worksheet_write_string(worksheet, 12, 0, "SUM OF SQUARE VARIANCE", NULL);
+            worksheet_write_number(worksheet, 12, 1, m_var, NULL);
+
+
+            worksheet_write_string(worksheet, 13, 0, "SUM VARIANCE", NULL);
+            worksheet_write_number(worksheet, 13, 1, m_svar, NULL);
+
+
+            workbook_close(workbook);
+            cout << "DATOS ALMACENADIOS";
+    }
+}
+
+void ExecHilo32(){
+    int bandera = 0;
+    std::string image_path = samples::findFile("/home/user/PARALELA/pro1/sky.png");
+    Mat img = imread(image_path, IMREAD_GRAYSCALE);
+    if(img.empty())
+    {
+        std::cout << "Could not read the image: " << image_path << std::endl;
+        bandera = 1;
+    }
+
+    if(bandera == 0){
+        // IMPRIMIR VALORES IMAGEN
+        unsigned char *p;
+        uchar intensity;
+        p = img.data;
+        int row, col, rows, cols;
+        cols = img.cols; //weigth - col
+        rows = img.rows; //heigth - fil
+
+        for(int y = 0; y < img.rows; y++){
+                for(int x = 0; x < img.cols; x++){
+                    intensity = img.data[img.step * y + x * 1];
+                }
+                cout << endl;
+            }
+
+        // CREAR ARRAY 2D CON LAS DIMENSIONES DEL DEGRADADO A GRISES
+        unsigned char **pGray;
+            pGray = new unsigned char *[rows];
+
+            for(int i = 0; i < rows; i++){
+                pGray[i] = new unsigned char[cols];
+            }
+
+            for (int y = 0; y < rows; y++)
+            {
+                for (int x = 0; x < cols; x++)
+                {
+                    pGray[y][x] = img.data[img.step * y + x * 1];
+                }
+            }
+        // IMPRIMIR LA ESCALA DE GRISES
+            cout << endl << "GRISES: " << endl << endl;
+            for(int y = 0; y < img.cols; y++){
+                for(int x = 0; x < img.rows; x++){
+                    intensity = pGray[y][x];
+                    cout << (unsigned int)intensity << "   ";
+                }
+                cout << endl;
+            }
+
+
+            int toneLUT[PGM_MAXMAXVAL + 1];		// toneLUT is an array that can hold 256 values
+            int toneCount = 0;
+            int iTone;
+
+            //RELLENAR CON -1
+            for(row = PGM_MAXMAXVAL; row >= 0; --row)
+                    toneLUT[row] = -1;
+
+            for(row = rows - 1; row >= 0; --row){
+                    for(col = 0; col < cols; ++col){
+                        toneLUT[(u_int8_t)img.data[img.step * row + col * 1]] = (u_int8_t)img.data[img.step * row + col * 1];
+                    }
+             }
+            for (row = PGM_MAXMAXVAL, toneCount = 0; row >= 0; --row){
+                    if (toneLUT[row] != -1)
+                        toneCount++;
+                    else
+                        ;
+                }
+            for (row = 0, iTone = 0; row <= PGM_MAXMAXVAL; row++){
+                    if (toneLUT[row] != -1)
+                      toneLUT[row] = iTone++;
+                }
+
+            double **pMatriz;
+            int distancia = 1;
+            pMatriz = CoOcMat_Angle_0(distancia, pGray, rows, col, toneLUT, toneCount);
+            double m_asm, m_contrast, m_corr, m_var, m_idm, m_savg, m_svar, m_sentropy, m_entropy, m_dvar, m_dentropy, m_icorr1, m_icorr2, m_maxcorr;
+    //empieza paralelización
+    #pragma omp parallel num_threads(32)
+    {
+
+
+
+            int hilo = omp_get_thread_num();
+            if(hilo == 1 || hilo == 17){
+                cout << "soy el hilo: " << hilo;
+                        //SECOND ANGULAR MOMENT
+                        m_asm = f1_asm (pMatriz , toneCount);
+            }
+             if(hilo == 2 || hilo == 18){
+                cout << "soy el hilo: " << hilo;
+                        //CORRELACION
+                        m_corr = f3_corr(pMatriz, toneCount);
+            }
+            if(hilo == 3 || hilo == 19){
+                cout << "soy el hilo: " << hilo;
+                //DIFERENCIA ENTROPIA
+                m_dentropy = f11_dentropy(pMatriz, toneCount);
+            }
+
+            if(hilo == 4 || hilo == 20){
+                cout << "soy el hilo: " << hilo;
+                        // DIFERENCIA VARIANZA
+            }
+            if(hilo == 5 || hilo == 21){
+                cout << "soy el hilo: " << hilo;
+                        m_dvar = f10_dvar(pMatriz, toneCount);
+             }
+            if(hilo == 6 || hilo == 22){
+                cout << "soy el hilo: " << hilo;
+                        //ENTROPIA
+                        m_entropy = f9_entropy(pMatriz, toneCount);
+            }
+            if(hilo == 7 || hilo == 23){
+                cout << "soy el hilo: " << hilo;
+                //INVERSE DIFERENCE MOEMNT
+                m_idm = f5_idm(pMatriz, toneCount);
+            }
+            if(hilo == 8 || hilo == 24){
+                cout << "soy el hilo: " << hilo;
+                //CONTRASTE
+                m_contrast = f2_contrast(pMatriz , toneCount);
+            }
+
+            if(hilo == 9 || hilo == 25){
+                //INFORMATION MESURE CORRELATION 1 Y 2
+                m_icorr1 = f12_icorr(pMatriz, toneCount);
+            }
+            if(hilo == 10 || hilo == 26){
+                cout << "soy el hilo: " << hilo;
+                m_icorr2 = f13_icorr(pMatriz, toneCount);
+            }
+            if(hilo == 11 || hilo == 27){
+                //MAXIMO CORRELATION COEFICIENT
+                m_maxcorr = f14_maxcorr(pMatriz, toneCount);
+            }
+            if(hilo == 12 || hilo == 28){
+                cout << "soy el hilo: " << hilo;
+                        //SUM AVEREGE
+                        m_savg = f6_savg(pMatriz, toneCount);
+                 }
+            if(hilo == 13 || hilo == 29){
+                cout << "soy el hilo: " << hilo;
+                        //SUMA ENTROPIA
+                        m_sentropy = f8_sentropy(pMatriz, toneCount);
+                    }
+            if(hilo == 14 || hilo == 30){
+                cout << "soy el hilo: " << hilo;
+                        //SUM OF SQUARE VARIANCE
+                        m_var = f4_var(pMatriz, toneCount);
+            }if(hilo == 15 || hilo == 31){
+                cout << "soy el hilo: " << hilo;
+                        //SUM VARIANCE
+                        m_svar = f7_svar(pMatriz, toneCount, m_sentropy);
+
+            }
+            if(hilo == 16 || hilo == 32){
+                cout << "soy el hilo: " << hilo;
+                imshow("BIenvenido", img);
+                waitKey(0);
+            }
+
+
+            }
+
+
+
+            lxw_workbook  *workbook  = workbook_new("/home/user/PARALELA/pro1/resultados.xlsx");
+            lxw_worksheet *worksheet = workbook_add_worksheet(workbook, NULL);
+
+            worksheet_write_string(worksheet, 0, 0, "SECOND ANGULAR MOMENT", NULL);
+            worksheet_write_number(worksheet, 0, 1, m_asm, NULL);
+
+            worksheet_write_string(worksheet, 1, 0, "CORRELACION", NULL);
+            worksheet_write_number(worksheet, 1, 1, m_corr, NULL);
+
+            worksheet_write_string(worksheet, 2, 0, "DIFERENCIA ENTROPIA", NULL);
+            worksheet_write_number(worksheet, 2, 1, m_dentropy, NULL);
+
+
+            worksheet_write_string(worksheet, 3, 0, "DIFERENCIA VARIANZA", NULL);
+            worksheet_write_number(worksheet, 3, 1, m_dvar, NULL);
+
+
+            worksheet_write_string(worksheet, 4, 0, "ENTROPIA", NULL);
+            worksheet_write_number(worksheet, 4, 1, m_entropy, NULL);
+
+
+            worksheet_write_string(worksheet, 5, 0, "INVERSE DIFERENCE MOEMNT", NULL);
+            worksheet_write_number(worksheet, 5, 1, m_idm, NULL);
+
+
+            worksheet_write_string(worksheet, 6, 0, "CONTRASTE", NULL);
+            worksheet_write_number(worksheet, 6, 1, m_contrast, NULL);
+
+
+            worksheet_write_string(worksheet, 7, 0, "INFORMATION MESURE CORRELATION 1", NULL);
+            worksheet_write_number(worksheet, 7, 1, m_icorr1, NULL);
+
+
+            worksheet_write_string(worksheet, 8, 0, "INFORMATION MESURE CORRELATION 2", NULL);
+            worksheet_write_number(worksheet, 8, 1, m_icorr2, NULL);
+
+
+            worksheet_write_string(worksheet, 9, 0, "MAXIMO CORRELATION COEFICIENT", NULL);
+            worksheet_write_number(worksheet, 9, 1, m_maxcorr, NULL);
+
+
+            worksheet_write_string(worksheet, 10, 0, "SUM AVEREGE", NULL);
+            worksheet_write_number(worksheet, 10, 1, m_savg, NULL);
+
+
+            worksheet_write_string(worksheet, 11, 0, "SUMA ENTROPIA", NULL);
+            worksheet_write_number(worksheet, 11, 1, m_sentropy, NULL);
+
+
+            worksheet_write_string(worksheet, 12, 0, "SUM OF SQUARE VARIANCE", NULL);
+            worksheet_write_number(worksheet, 12, 1, m_var, NULL);
+
+
+            worksheet_write_string(worksheet, 13, 0, "SUM VARIANCE", NULL);
+            worksheet_write_number(worksheet, 13, 1, m_svar, NULL);
+
+
+            workbook_close(workbook);
+            cout << "DATOS ALMACENADIOS";
+    }
+}
 
 
 int main()
 {
-    ExecHilo1();
+    //ExecHilo1();
+    //ExecHilo4();
+    //ExecHilo8();
+    //ExecHilo16();
+    ExecHilo32();
     return 0;
 }
 
