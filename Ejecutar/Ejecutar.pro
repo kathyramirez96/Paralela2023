@@ -10,30 +10,25 @@ CONFIG -= app_bundle
 SOURCES += \
         main.cpp
 
+INCLUDEPATH += /home/user/PARALELA/PADRE/classification \ # Aqui es el path del proyecto con las cabeceras
+               /home/user/PARALELA/IMAGENES
 
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../build-IMAGENES-Desktop-Debug/release/ -lIMAGENES
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../build-IMAGENES-Desktop-Debug/debug/ -lIMAGENES
-else:unix: LIBS += -L$$PWD/../../build-IMAGENES-Desktop-Debug/ -lIMAGENES
+LIBS += -L/home/user/PARALELA/PADRE/build \  # Directorio con los archivos compilados
+    -L/home/user/build-IMAGENES-Desktop-Debug \
+    -lIMAGENES \
+    -lclassification \
+    -ldcmdata \
+    -ldcmimgle \
+    -ldcmimage \
+    -ldcmjpeg \
+    -lpthread
 
-INCLUDEPATH += $$PWD/../IMAGENES
-DEPENDPATH += $$PWD/../IMAGENES
 
-win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../build-IMAGENES-Desktop-Debug/release/libIMAGENES.a
-else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../build-IMAGENES-Desktop-Debug/debug/libIMAGENES.a
-else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../build-IMAGENES-Desktop-Debug/release/IMAGENES.lib
-else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../build-IMAGENES-Desktop-Debug/debug/IMAGENES.lib
-else:unix: PRE_TARGETDEPS += $$PWD/../../build-IMAGENES-Desktop-Debug/libIMAGENES.a
+INCLUDEPATH += /usr/local/include
+LIBS += -L/usr/local/lib -lxlsxwriter -lz
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../build-LIBIMG-Desktop-Debug/release/ -lLIBIMG
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../build-LIBIMG-Desktop-Debug/debug/ -lLIBIMG
-else:unix: LIBS += -L$$PWD/../build-LIBIMG-Desktop-Debug/ -lLIBIMG
-
-INCLUDEPATH += $$PWD/../LIBIMG
-DEPENDPATH += $$PWD/../LIBIMG
-
-win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../build-LIBIMG-Desktop-Debug/release/libLIBIMG.a
-else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../build-LIBIMG-Desktop-Debug/debug/libLIBIMG.a
-else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../build-LIBIMG-Desktop-Debug/release/LIBIMG.lib
-else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../build-LIBIMG-Desktop-Debug/debug/LIBIMG.lib
-else:unix: PRE_TARGETDEPS += $$PWD/../build-LIBIMG-Desktop-Debug/libLIBIMG.a
+unix {
+    target.path = $$[QT_INSTALL_PLUGINS]/generic
+}
+!isEmpty(target.path): INSTALLS += target

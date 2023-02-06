@@ -71,8 +71,7 @@ double *allocate_vector (int nl, int nh) {
 
 
 //MATRIZ DE CONCURRENCIA CON ANGULO 0
-double** CoOcMat_Angle_0 (int distance, u_int8_t **grays,
-                         int rows, int cols, int* tone_LUT, int tone_count)
+double** CoOcMat_Angle_0 (int distance, u_int8_t **grays, int rows, int cols, int* tone_LUT, int tone_count)
 {
     int d = distance;
     int x, y;
@@ -707,17 +706,12 @@ int main()
     // IMPRIMIR VALORES IMAGEN
     unsigned char *p;
     uchar intensity;
-    p = img.data;
+    //p = img.data;
+
     int row, col, rows, cols;
     cols = img.cols; //weigth - col
     rows = img.rows; //heigth - fil
 
-    for(int y = 0; y < img.rows; y++){
-            for(int x = 0; x < img.cols; x++){
-                intensity = img.data[img.step * y + x * 1];
-            }
-            cout << endl;
-        }
 
     // CREAR ARRAY 2D CON LAS DIMENSIONES DEL DEGRADADO A GRISES
     unsigned char **pGray;
@@ -768,7 +762,7 @@ int main()
                 if (toneLUT[row] != -1)
                   toneLUT[row] = iTone++;
             }
-
+        cout <<"\n el contador esta en = "<< toneCount << "\n";
         double **pMatriz;
         int distancia = 1;
         pMatriz = CoOcMat_Angle_0(distancia, pGray, rows, col, toneLUT, toneCount);
