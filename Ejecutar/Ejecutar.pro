@@ -24,9 +24,13 @@ LIBS += -L/home/user/PARALELA/PADRE/build \  # Directorio con los archivos compi
     -ldcmjpeg \
     -lpthread
 
-
+#LIBRERIA DE EXCEL
 INCLUDEPATH += /usr/local/include
 LIBS += -L/usr/local/lib -lxlsxwriter -lz
+#LIBRERIA DE OMP
+QMAKE_LFLAGS += -fopenmp
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -fopenmp
 
 unix {
     target.path = $$[QT_INSTALL_PLUGINS]/generic
