@@ -1,0 +1,6 @@
+projectKey=GLCM
+serverUrl=http://localhost:444
+serverVersion=9.6.1.59531
+dashboardUrl=http://localhost:444/dashboard?id=GLCM
+ceTaskId=AYYnzVAehq7suVMseKF9
+ceTaskUrl=http://localhost:444/api/ce/task?id=AYYnzVAehq7suVMseKF9
